@@ -11,14 +11,94 @@ class SetImpl<T extends Comparable<T>> implements Set<T> {
 	@Override
 	public Iterator<T> iterator() {
 		// Iterator implementieren...
-		throw new UnsupportedOperationException();
+		return new Iterator<T>() {
+
+			Stack<Element> agenda = new StackImpl<>();
+
+			//Default Konstruktor für anonyme innere Klasse
+			{
+				if (root != null)
+					agenda.push(root);
+			}
+
+			@Override
+			public boolean hasNext() {
+				return agenda.size() > 0;
+			}
+
+			@Override
+			public T next() {
+				//Oberstes Element nehmen...
+				Element e = agenda.pop();
+
+				//Gibts weitere?
+				if (e.left != null)
+					agenda.push(e.left);
+				if (e.right != null)
+					agenda.push(e.right);
+
+				//Wert zurückgeben
+				return e.val;
+			}
+		};
 	}
 
 	/**
 	 * Bonusaufgabe: Gibt einen Iterator zurück, welcher nur Blätter zurückgibt (Knoten ohne Kinder!)
 	 */
 	public Iterator<T> leafIterator() {
-		throw new UnsupportedOperationException();
+		return new Iterator<T>() {
+			Element next;
+
+			//Verwende Stack um Tiefensuche zu erreichen
+			Stack<Element> agenda = new StackImpl<>();
+
+			//Konstruktor
+			{
+				if (root != null) {
+					agenda.push(root);
+					next = findeNaechstes();
+				}
+			}
+
+			/**
+			 * Wir finden das naechste Blatt durch Tiefensuche (also erst in die Tiefe absteigen);
+			 * wird die Agenda hier leer, haben wir kein weiteres Blatt mehr gefunden.
+			 * Achtung: Hat Seiteneffekt auf die Agenda!
+			 */
+			private Element findeNaechstes(){
+				while (agenda.size() > 0){
+					Element e = agenda.pop();
+
+					//Treffer! Die Agenda bleibt erstmal unberührt
+					if (e.left == null && e.right == null)
+						return e;
+
+					if (e.left != null)
+						agenda.push(e.left);
+
+					if (e.right != null)
+						agenda.push(e.right);
+				}
+				return null;
+			}
+
+			@Override
+			public boolean hasNext() {
+				return next != null;
+			}
+
+			@Override
+			public T next() {
+				//akturell nächstes sichern
+				Element n = next;
+
+				//neues nächstes suchen; könnte null sein!
+				next = findeNaechstes();
+
+				return n.val;
+			}
+		};
 	}
 
 	private class Element {
